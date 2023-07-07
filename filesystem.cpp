@@ -491,7 +491,7 @@ bool Fat32::convertToVolumeId(const ByteArray &block)
         return false;
     }
 
-    //dumpBlock(cerr, block);
+    dumpBlock(cerr, block);
 
     BPB_BytsPerSec = Read16Bits( block, 0x0B);  // Bytes per sector. Always 512
     BPB_SecPerClus = Read8Bits ( block, 0x0D);  // Sectors per cluster. 1,2,4,8,16,32,64,128
@@ -504,18 +504,19 @@ bool Fat32::convertToVolumeId(const ByteArray &block)
 
     cout << BPB_BytsPerSec << ", " << BPB_SecPerClus << ", "
          << BPB_RsvdSecCnt << ", " << BPB_NumFATs << ", "
+         << BPB_TotSec32 << ", "
          << BPB_FATSz32 << ", " << BPB_RootClus << ", "
          << signature << endl;
-//    cout << "FFAT ends at 0x549800? == " << (BPB_RsvdSecCnt + (BPB_FATSz32 * BPB_NumFATs)) << endl;
+   cout << "FFAT ends at 0x549800? == " << (BPB_RsvdSecCnt + (BPB_FATSz32 * BPB_NumFATs)) << endl;
 
     const unsigned long Partition_LBA_Begin = 0; ///< @todo get this passed in?
     m_fatBeginLBA = Partition_LBA_Begin + BPB_RsvdSecCnt;
     m_clusterBeginLBA = Partition_LBA_Begin + BPB_RsvdSecCnt + (BPB_NumFATs * BPB_FATSz32);
     m_sectorsPerCluster = BPB_SecPerClus;
     m_rootDirFirstCluster = BPB_RootClus;
-    cout << "FFAT begin LBA = 0x" << hex << m_fatBeginLBA << dec << endl;
-    cout << "Cluster begin LBA = 0x" << hex << m_clusterBeginLBA << dec << endl;
-    cout << "Sectors Per Cluster" << m_sectorsPerCluster << endl;
+    cout << " FFAT begin LBA = 0x" << hex << m_fatBeginLBA << dec << endl;
+    cout << " Cluster begin LBA = 0x" << hex << m_clusterBeginLBA << dec << endl;
+    cout << " Sectors Per Cluster" << m_sectorsPerCluster << endl;
 
     return ((BPB_BytsPerSec==512) && (BPB_NumFATs==2) && (signature==0xAA55));
 }
@@ -621,7 +622,7 @@ bool Xtvfs::open(const std::string &filepath)
     if (xfs != 0x30534658)
         return false;
 
-    cout << "XFS marker found" << endl;
+    cout << "** XFS marker found" << endl;
 
     return okay;
 }
@@ -632,10 +633,11 @@ bool Xtvfs::convertToVolumeId(const ByteArray &block)
     bool okay = inherited::convertToVolumeId(block);
 
     m_vfatBeginLBA = m_fatBeginLBA + (BPB_FATSz32*BPB_NumFATs);
-    cout << "FFAT begin LBA = 0x" << hex << m_fatBeginLBA << dec << endl;
-    cout << "Cluster begin LBA = 0x" << hex << m_clusterBeginLBA << dec << endl;
-    cout << "Sectors Per Cluster" << m_sectorsPerCluster << endl;
-    cout << "VFAT begin LBA = 0x" << hex << m_vfatBeginLBA << dec << endl;
+    cout << "For block " <<  &block << endl;
+    cout << " FFAT begin LBA = 0x" << hex << m_fatBeginLBA << dec << endl;
+    cout << " Cluster begin LBA = 0x" << hex << m_clusterBeginLBA << dec << endl;
+    cout << " Sectors Per Cluster" << m_sectorsPerCluster << endl;
+    cout << " VFAT begin LBA = 0x" << hex << m_vfatBeginLBA << dec << endl;
 
     // First get a rough estimate (2% of the partition's total number of sectors)
     const double lbaVidEstimate = BPB_TotSec32 * 0.02;
@@ -645,7 +647,7 @@ bool Xtvfs::convertToVolumeId(const ByteArray &block)
     // we need to round up to the next cluster
     m_vdataBeginLBA = ( ceil((lbaVidEstimate - m_clusterBeginLBA)/  BPB_SecPerClus)
                         * BPB_SecPerClus) + m_clusterBeginLBA;
-    cout << "VDATA begin LBA = 0x" << hex << m_vdataBeginLBA << dec << endl;
+    cout << " VDATA (video data) begin LBA = 0x" << hex << m_vdataBeginLBA << dec << endl;
 
     return okay;
 }
@@ -793,7 +795,9 @@ bool Xtvfs::copyVideoFile(const std::string &dest, size_t startCluster, unsigned
         const size_t bytesThisBlock =  (bytesToCopy > block.size()) ? block.size() : bytesToCopy;
         const size_t ret = fwrite((const char*)&block[0], 1, bytesThisBlock, s);
         if (ret != bytesThisBlock)
-            cout << "Writing error: " << ret << "  " << errno << endl;
+            // cout << "Writing error: " << ret << "  " << errno << endl;
+            // RJLRJL
+            cout << "Writing error: " << ret << "  " << "some error" << endl;
         else
             bytesCopied += ret;
 

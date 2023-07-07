@@ -154,9 +154,13 @@ void MainWindow::on_actionOpen_triggered()
     if (!okay)
     {
         // Xtvfs didn't work, try Fat32 instead
+        qDebug() << "Xtvfs didn't work, trying Fat32 instead";
         delete diskImage;
         diskImage = new fs::Fat32();
         okay  = diskImage->open(filepath);
+    }
+    else {
+        qDebug() << "Got an Xtvfs file system";
     }
 
     if (!okay)
@@ -185,8 +189,10 @@ void MainWindow::on_actionOpen_triggered()
         else
             qDebug() << "Error copying the pcat file";
     }
-    else
+    else {
+        qDebug() << "Does not appear to be a Sky DB image (FSN_DATA/PCAT.DB not present)";
         ui->SkyDBFrame->hide();
+    }
 
 #if defined(TEST_FAT_FOR_REUSED_CLUSTERS)
     // Was using this to validate the FAT chain reader - seeing if there was a clash in clusters used.
@@ -370,6 +376,8 @@ void MainWindow::on_actionExtract_Recording_triggered()
     QTableWidgetItem *item = ui->recordingsTW->selectedItems().front();
     const int eventId = item->data(Qt::UserRole).toInt();
     qDebug() << "eventId =" << eventId;
+
+    qDebug() << "Preparing query";
 
     QSqlQuery query("SELECT item.event_id,service_type,event_name,local_start_time,duration,channel_name,shrec_locator,synopsis,av_content.av_content_id,vfile_locator "
                     "FROM item,booking_info,av_content "

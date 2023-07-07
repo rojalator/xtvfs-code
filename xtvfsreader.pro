@@ -11,7 +11,6 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = xtvfsreader
 TEMPLATE = app
 
-
 SOURCES += main.cpp\
         mainwindow.cpp \
     filesystem.cpp
